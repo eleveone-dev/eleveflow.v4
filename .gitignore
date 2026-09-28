@@ -49,3 +49,4 @@ playwright-report/
 *.sw?
 .vercel
 migracao/
+.keys/
