@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.production.example
+node_modules
+dist
+.output
+.git
+migracao
+coverage
+test-results
+playwright-report
+.vercel
+.wrangler
+.lovable
+.planning
+.superpowers
+docs

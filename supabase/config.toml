@@ -1,0 +1,68 @@
+# PRODUÇÃO do EleveFlow desde 2026-07-15 (eleveflow-marketing, sa-east-1).
+# Mudanças aditivas apenas; smoke pós-deploy obrigatório.
+# aoanpviozfabrrxjqayk é o legado Lovable (conta inacessível) — não usar.
+project_id = "xlycuunqpgpyfmafgajr"
+
+# Every handler below performs its own explicit actor check. This lets the same
+# endpoint safely accept a user JWT or an internal service-role key, while the
+# WhatsApp webhook uses its dedicated signature/secret verification.
+[functions.process-queue]
+verify_jwt = false
+
+[functions.process-flows]
+verify_jwt = false
+
+# A Meta nao envia JWT: a autenticacao do POST e a assinatura X-Hub-Signature-256
+# e a do GET e o hub.verify_token.
+[functions.meta-whatsapp-webhook]
+verify_jwt = false
+
+# A Evolution tambem nao envia JWT: a autenticacao e o header privado registrado
+# na instancia, ou HMAC do corpo cru. Ver _shared/whatsapp/evolution-webhook.ts.
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+# Exige sessao de usuario: a propria funcao chama getAuthUser e deriva a
+# instancia do auth.uid(). A verificacao fica no codigo, junto do gate de
+# admin, como no meta-whatsapp-admin.
+[functions.whatsapp-proxy]
+verify_jwt = false
+
+# Exige sessao de usuario: a propria funcao chama getAuthUser e nao aceita
+# worker interno, entao a verificacao fica no codigo, junto do resto do gate.
+[functions.meta-whatsapp-admin]
+verify_jwt = false
+
+[functions.execute-flow]
+verify_jwt = false
+
+[functions.execute-sequence]
+verify_jwt = false
+
+[functions.ai-agent-reply]
+verify_jwt = false
+
+[functions.trigger-flow-by-stage]
+verify_jwt = false
+
+[functions.resume-flow]
+verify_jwt = false
+
+[functions.enrich-lead]
+verify_jwt = false
+
+[functions.google-extractor]
+verify_jwt = false
+
+[functions.serp-search]
+verify_jwt = false
+
+# Token proprio do Sales Coach, nao JWT do Supabase: a funcao compara o SHA-256
+# do Bearer com o segredo SALES_COACH_TOKENS. Ver _shared/sales-coach.ts.
+[functions.sales-coach]
+verify_jwt = false
+
+# Token proprio do Eleve Office (api_tokens), nao JWT do Supabase. Ver
+# _shared/api-token.ts.
+[functions.office-api]
+verify_jwt = false

@@ -1,0 +1,1 @@
+ALTER TABLE public.flow_executions ADD COLUMN IF NOT EXISTS context jsonb NOT NULL DEFAULT '{}'::jsonb;

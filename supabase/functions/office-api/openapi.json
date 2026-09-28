@@ -1,0 +1,1552 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "EleveFlow — API do Eleve Office",
+    "version": "1.1.0",
+    "description": "Leitura comercial e tarefas do EleveFlow para os agentes do Eleve Office. A conta é sempre a do token: nada na requisição escolhe conta. Leitura comercial (escopo comercial:leitura): no EleveFlow o lead é a oportunidade (uma negociação por lead; reabrir é voltar de etapa), a conta tem um pipeline e um vendedor, e o motivo de perda é o nome da etapa de perda. Leads de teste ficam fora. Cobertura histórica: mensagens desde 2026-06-16; mensagem do aparelho e mídia desde 2026-09-25; origem IA e nome da etapa da época desde a versão 1.0.0; transições de etapa desde 2026-09-21. Tarefas (escopos tarefas:leitura e tarefas:escrita): o Office cria, altera e entrega; a entrega leva a tarefa a aguardando_revisao e só o dono conclui, na tela. Nenhuma rota conclui, apaga ou reabre tarefa."
+  },
+  "servers": [
+    {
+      "url": "https://xlycuunqpgpyfmafgajr.supabase.co/functions/v1/office-api"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/v1/leads": {
+      "get": {
+        "operationId": "listarLeads",
+        "summary": "Lista leads, do atualizado há mais tempo para o mais recente",
+        "description": "Serve também de sincronização incremental: guarde o proximo_cursor. Filtros e cursor andam juntos: mudar o filtro exige cursor novo. Os últimos 5 segundos ficam de fora.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/atualizadoDesde"
+          },
+          {
+            "$ref": "#/components/parameters/criadoDe"
+          },
+          {
+            "$ref": "#/components/parameters/criadoAte"
+          },
+          {
+            "$ref": "#/components/parameters/etapaId"
+          },
+          {
+            "$ref": "#/components/parameters/situacao"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de leads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaLeads"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/leads/{id}": {
+      "get": {
+        "operationId": "obterLead",
+        "summary": "Um lead",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lead",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lead"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/leads/{id}/mensagens": {
+      "get": {
+        "operationId": "listarMensagensDoLead",
+        "summary": "Conversa do lead, em ordem cronológica",
+        "description": "Ordem por enviada_em e mensagem_id: determinística, sem pular nem repetir entre páginas. Texto integral.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de mensagens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaMensagens"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/leads/{id}/etapas": {
+      "get": {
+        "operationId": "listarEtapasDoLead",
+        "summary": "Histórico de etapas do lead, em ordem cronológica",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de eventos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaEventos"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/mensagens": {
+      "get": {
+        "operationId": "feedMensagens",
+        "summary": "Feed de mensagens gravadas, para sincronização",
+        "description": "Ordem por gravada_em e mensagem_id. Traz também mensagem antiga recuperada depois (gravada_em recente, enviada_em antigo). Os últimos 5 segundos ficam de fora.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de mensagens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaMensagens"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/etapas": {
+      "get": {
+        "operationId": "feedEtapas",
+        "summary": "Feed de eventos de etapa gravados, para sincronização",
+        "description": "Ordem por gravado_em e evento_id. Os últimos 5 segundos ficam de fora.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de eventos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaEventos"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/exclusoes": {
+      "get": {
+        "operationId": "feedExclusoes",
+        "summary": "Feed de leads, mensagens e tarefas apagados",
+        "description": "Cada escopo de leitura vê as exclusões das entidades dele: comercial:leitura vê lead e mensagem; tarefas:leitura vê tarefa. Apagar um lead gera um registro só, o do lead: as mensagens dele somem junto. Os últimos 5 segundos ficam de fora.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de exclusões",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaExclusoes"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/tarefas": {
+      "get": {
+        "operationId": "listarTarefas",
+        "summary": "Lista tarefas, da atualizada há mais tempo para a mais recente",
+        "description": "Escopo tarefas:leitura. Serve de sincronização incremental: guarde o proximo_cursor; tarefa alterada volta a aparecer depois do cursor. Filtros e cursor andam juntos: mudar o filtro exige cursor novo. Os últimos 5 segundos ficam de fora.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limite"
+          },
+          {
+            "$ref": "#/components/parameters/cursor"
+          },
+          {
+            "$ref": "#/components/parameters/statusTarefa"
+          },
+          {
+            "$ref": "#/components/parameters/responsavelTipo"
+          },
+          {
+            "$ref": "#/components/parameters/responsavelRef"
+          },
+          {
+            "$ref": "#/components/parameters/atualizadoDesde"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de tarefas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaTarefas"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      },
+      "post": {
+        "operationId": "criarTarefa",
+        "summary": "Cria uma tarefa",
+        "description": "Escopo tarefas:escrita. Nasce pendente, com origem eleve_office e criador agente. Repetir com a mesma Idempotency-Key devolve a tarefa já criada (200) e não cria outra; o corpo da repetição não é aplicado, mas ainda precisa ser válido.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/idempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TarefaNova"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Repetição: a tarefa já criada com esta chave",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tarefa"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Tarefa criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tarefa"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/tarefas/{id}": {
+      "get": {
+        "operationId": "obterTarefa",
+        "summary": "Uma tarefa",
+        "description": "Escopo tarefas:leitura.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tarefaId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarefa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tarefa"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "alterarTarefa",
+        "summary": "Altera campos da tarefa",
+        "description": "Escopo tarefas:escrita. Vale para qualquer tarefa da conta, inclusive as criadas na tela. If-Match com a versao lida. Status só entre pendente e em_andamento; nenhuma rota conclui, apaga ou reabre.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tarefaId"
+          },
+          {
+            "$ref": "#/components/parameters/ifMatch"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TarefaAlteracao"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarefa alterada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tarefa"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "409": {
+            "$ref": "#/components/responses/TransicaoInvalida"
+          },
+          "412": {
+            "$ref": "#/components/responses/VersaoDesatualizada"
+          },
+          "428": {
+            "$ref": "#/components/responses/VersaoObrigatoria"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/tarefas/{id}/entrega": {
+      "post": {
+        "operationId": "entregarTarefa",
+        "summary": "Entrega a tarefa para a revisão do dono",
+        "description": "Escopo tarefas:escrita. Leva a tarefa a aguardando_revisao com o resultado; reentrega troca o resultado. Tarefa concluída: 409. Quem conclui é o dono, na tela.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tarefaId"
+          },
+          {
+            "$ref": "#/components/parameters/ifMatch"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Entrega"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarefa entregue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tarefa"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ParametroInvalido"
+          },
+          "401": {
+            "$ref": "#/components/responses/NaoAutorizado"
+          },
+          "403": {
+            "$ref": "#/components/responses/EscopoInsuficiente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NaoEncontrado"
+          },
+          "409": {
+            "$ref": "#/components/responses/TransicaoInvalida"
+          },
+          "412": {
+            "$ref": "#/components/responses/VersaoDesatualizada"
+          },
+          "428": {
+            "$ref": "#/components/responses/VersaoObrigatoria"
+          },
+          "429": {
+            "$ref": "#/components/responses/LimiteExcedido"
+          },
+          "500": {
+            "$ref": "#/components/responses/ErroInterno"
+          }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "operationId": "obterContrato",
+        "summary": "Este contrato",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Documento OpenAPI",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token efsc_ emitido pelo EleveFlow. Escopos: comercial:leitura (leads, mensagens, etapas), tarefas:leitura e tarefas:escrita. Fica só no servidor do Office."
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "lead_id. Lead de outra conta responde 404, igual a inexistente.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "limite": {
+        "name": "limite",
+        "in": "query",
+        "description": "Itens por página.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500,
+          "default": 100
+        }
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "proximo_cursor da página anterior. Opaco.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "atualizadoDesde": {
+        "name": "atualizado_desde",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "criadoDe": {
+        "name": "criado_de",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "criadoAte": {
+        "name": "criado_ate",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "etapaId": {
+        "name": "etapa_id",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "situacao": {
+        "name": "situacao",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": ["em_andamento", "ganha", "perdida"]
+        }
+      },
+      "tarefaId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "tarefa_id. Tarefa de outra conta responde 404, igual a inexistente.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "statusTarefa": {
+        "name": "status",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": ["pendente", "em_andamento", "aguardando_revisao", "concluida"]
+        }
+      },
+      "responsavelTipo": {
+        "name": "responsavel_tipo",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": ["dono", "agente"]
+        }
+      },
+      "responsavelRef": {
+        "name": "responsavel_ref",
+        "in": "query",
+        "description": "Referência do agente no Office.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "ifMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "description": "Versão lida da tarefa (campo versao), entre aspas: \"3\". Diferente da atual: 412 com a tarefa atual. Ausente: 428.",
+        "schema": {
+          "type": "string",
+          "examples": ["\"3\""]
+        }
+      },
+      "idempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "Chave única da criação, de 1 a 200 caracteres visíveis, sem espaço. Use o id da ordem ou da tarefa no Office. Repetir com a mesma chave devolve a mesma tarefa (200) e não cria outra.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "schemas": {
+      "Etapa": {
+        "type": "object",
+        "required": ["id", "nome", "tipo"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": ["string", "null"]
+          },
+          "tipo": {
+            "type": ["string", "null"],
+            "enum": ["prospecting", "interested", "demo", "proposal", "won", "lost", null],
+            "description": "funnel_key da etapa; null = etapa ativa sem classificação."
+          }
+        }
+      },
+      "Lead": {
+        "type": "object",
+        "properties": {
+          "lead_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Também é o id da oportunidade."
+          },
+          "nome": {
+            "type": "string"
+          },
+          "empresa": {
+            "type": ["string", "null"]
+          },
+          "origem": {
+            "type": ["string", "null"],
+            "examples": ["extrator-google"]
+          },
+          "responsavel": {
+            "type": "null",
+            "description": "O CRM não registra dono por lead: a conta tem um vendedor."
+          },
+          "etapa": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Etapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "situacao": {
+            "type": "string",
+            "enum": ["em_andamento", "ganha", "perdida"]
+          },
+          "fechado_em": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Última mudança registrada para a etapa de ganho ou perda atual. Lead importado já fechado: null."
+          },
+          "motivo_perda": {
+            "type": ["string", "null"],
+            "description": "Nome da etapa de perda, só com situacao = perdida."
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "examples": [
+          {
+            "lead_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "nome": "Barbearia Exemplo",
+            "empresa": "Barbearia Exemplo",
+            "origem": "extrator-google",
+            "responsavel": null,
+            "etapa": {
+              "id": "1c8d0b7f-2a3e-4d4c-9b0f-6e5d4c3b2a1f",
+              "nome": "Interessado",
+              "tipo": "interested"
+            },
+            "situacao": "em_andamento",
+            "fechado_em": null,
+            "motivo_perda": null,
+            "criado_em": "2026-09-21T10:29:20.370679+00:00",
+            "atualizado_em": "2026-09-24T22:25:19.937271+00:00"
+          }
+        ]
+      },
+      "Mensagem": {
+        "type": "object",
+        "properties": {
+          "mensagem_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lead_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversa_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Igual ao lead_id: uma conversa de WhatsApp por lead."
+          },
+          "enviada_em": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Instante da mensagem."
+          },
+          "gravada_em": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Instante em que o EleveFlow gravou."
+          },
+          "direcao": {
+            "type": "string",
+            "enum": ["recebida", "enviada"]
+          },
+          "origem": {
+            "type": "string",
+            "enum": ["lead", "humano_aparelho", "humano_crm", "automacao", "ia"],
+            "description": "humano_aparelho: vendedor pelo celular ou WhatsApp Web. humano_crm: vendedor pela tela do CRM. Resposta da IA anterior a esta versão aparece como automacao."
+          },
+          "atendente_id": {
+            "type": "null",
+            "description": "O CRM não registra qual usuário enviou."
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "texto",
+              "audio",
+              "imagem",
+              "video",
+              "documento",
+              "figurinha",
+              "localizacao",
+              "contato",
+              "outro"
+            ]
+          },
+          "texto": {
+            "type": "string",
+            "description": "Integral. Vazio em mídia sem legenda."
+          },
+          "tem_texto": {
+            "type": "boolean"
+          },
+          "transcricao": {
+            "type": "null",
+            "description": "Nada é transcrito."
+          },
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["recebida", "pendente", "enviada", "falhou", null],
+            "description": "null em mensagem do aparelho."
+          }
+        },
+        "examples": [
+          {
+            "mensagem_id": "2d9e1c8a-3b4f-4e5d-8c1a-7f6e5d4c3b2a",
+            "lead_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "conversa_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "enviada_em": "2026-09-25T13:53:51.753744+00:00",
+            "gravada_em": "2026-09-25T13:53:52.001002+00:00",
+            "direcao": "recebida",
+            "origem": "lead",
+            "atendente_id": null,
+            "tipo": "texto",
+            "texto": "Oi, pode me mandar o orçamento?",
+            "tem_texto": true,
+            "transcricao": null,
+            "status": "recebida"
+          }
+        ]
+      },
+      "Evento": {
+        "type": "object",
+        "properties": {
+          "evento_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lead_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": ["criacao", "mudanca"]
+          },
+          "de": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Etapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "para": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Etapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nome_da_epoca": {
+            "type": "boolean",
+            "description": "true: nome e tipo gravados na hora da mudança. false: evento antigo, com o nome e o tipo de hoje."
+          },
+          "ocorreu_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gravado_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "autor": {
+            "type": "object",
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": ["usuario", "automacao_ou_importacao"]
+              },
+              "id": {
+                "type": ["string", "null"],
+                "format": "uuid"
+              }
+            }
+          },
+          "resultado": {
+            "type": ["string", "null"],
+            "enum": ["ganho", "perda", "reabertura", null]
+          },
+          "motivo_perda": {
+            "type": ["string", "null"]
+          }
+        },
+        "examples": [
+          {
+            "evento_id": "3e0f2d9b-4c5a-4f6e-9d2b-8a7f6e5d4c3b",
+            "lead_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "tipo": "mudanca",
+            "de": {
+              "id": "4f1a3e0c-5d6b-4a7f-8e3c-9b8a7f6e5d4c",
+              "nome": "Demonstração",
+              "tipo": "demo"
+            },
+            "para": {
+              "id": "5a2b4f1d-6e7c-4b8a-9f4d-0c9b8a7f6e5d",
+              "nome": "Não tem Interesse",
+              "tipo": "lost"
+            },
+            "nome_da_epoca": true,
+            "ocorreu_em": "2026-09-24T22:25:19.937271+00:00",
+            "gravado_em": "2026-09-24T22:25:19.937271+00:00",
+            "autor": {
+              "tipo": "automacao_ou_importacao",
+              "id": null
+            },
+            "resultado": "perda",
+            "motivo_perda": "Não tem Interesse"
+          }
+        ]
+      },
+      "Exclusao": {
+        "type": "object",
+        "properties": {
+          "entidade": {
+            "type": "string",
+            "enum": ["lead", "mensagem", "tarefa"]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "excluido_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sequencia": {
+            "type": "integer",
+            "description": "Desempate do cursor."
+          }
+        }
+      },
+      "PaginaLeads": {
+        "type": "object",
+        "properties": {
+          "dados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lead"
+            }
+          },
+          "proximo_cursor": {
+            "type": ["string", "null"]
+          },
+          "tem_mais": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginaMensagens": {
+        "type": "object",
+        "properties": {
+          "dados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mensagem"
+            }
+          },
+          "proximo_cursor": {
+            "type": ["string", "null"]
+          },
+          "tem_mais": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginaEventos": {
+        "type": "object",
+        "properties": {
+          "dados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Evento"
+            }
+          },
+          "proximo_cursor": {
+            "type": ["string", "null"]
+          },
+          "tem_mais": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginaExclusoes": {
+        "type": "object",
+        "properties": {
+          "dados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Exclusao"
+            }
+          },
+          "proximo_cursor": {
+            "type": ["string", "null"]
+          },
+          "tem_mais": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "erro": {
+            "type": "object",
+            "properties": {
+              "codigo": {
+                "type": "string",
+                "enum": [
+                  "parametro_invalido",
+                  "token_invalido",
+                  "escopo_insuficiente",
+                  "nao_encontrado",
+                  "metodo_nao_permitido",
+                  "limite_excedido",
+                  "erro_interno",
+                  "transicao_invalida",
+                  "versao_desatualizada",
+                  "versao_obrigatoria"
+                ]
+              },
+              "mensagem": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Responsavel": {
+        "type": "object",
+        "required": ["tipo"],
+        "additionalProperties": false,
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": ["dono", "agente"]
+          },
+          "ref": {
+            "type": ["string", "null"],
+            "maxLength": 200,
+            "description": "Id do agente no Office. Obrigatória para agente; ausente ou null para dono."
+          }
+        }
+      },
+      "Tarefa": {
+        "type": "object",
+        "properties": {
+          "tarefa_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do EleveFlow, o mesmo na integração."
+          },
+          "conta_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": ["string", "null"]
+          },
+          "prioridade": {
+            "type": "string",
+            "enum": ["baixa", "media", "alta"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pendente", "em_andamento", "aguardando_revisao", "concluida"],
+            "description": "aguardando_revisao: entregue pelo Office, esperando o dono. Só o dono conclui."
+          },
+          "criador": {
+            "type": "object",
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": ["dono", "agente"]
+              },
+              "ref": {
+                "type": ["string", "null"]
+              }
+            }
+          },
+          "responsavel": {
+            "$ref": "#/components/schemas/Responsavel"
+          },
+          "prazo": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Em UTC."
+          },
+          "lead_id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "projeto_ref": {
+            "type": ["string", "null"]
+          },
+          "origem": {
+            "type": "string",
+            "enum": ["eleveflow", "eleve_office"],
+            "description": "eleveflow: criada na tela; eleve_office: criada pela API."
+          },
+          "ordem_externa_id": {
+            "type": ["string", "null"]
+          },
+          "resultado": {
+            "type": ["string", "null"]
+          },
+          "resultado_ref": {
+            "type": ["string", "null"]
+          },
+          "versao": {
+            "type": "integer",
+            "description": "Sobe a cada alteração, pela tela ou pela API. Vai no If-Match."
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "atualizada_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "concluida_em": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "examples": [
+          {
+            "tarefa_id": "6b1e2c3d-4f5a-4b6c-8d7e-9f0a1b2c3d4e",
+            "conta_id": "7a3f1e2d-5c4b-4a39-8f7e-6d5c4b3a2f1e",
+            "titulo": "Ligar para a Barbearia Exemplo",
+            "descricao": "Confirmar a demonstração de quinta",
+            "prioridade": "alta",
+            "status": "em_andamento",
+            "criador": {
+              "tipo": "agente",
+              "ref": "nexo"
+            },
+            "responsavel": {
+              "tipo": "agente",
+              "ref": "sdr-1"
+            },
+            "prazo": "2026-09-26T13:00:00+00:00",
+            "lead_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "projeto_ref": null,
+            "origem": "eleve_office",
+            "ordem_externa_id": "ordem-123",
+            "resultado": null,
+            "resultado_ref": null,
+            "versao": 3,
+            "criada_em": "2026-09-25T18:02:11.204518+00:00",
+            "atualizada_em": "2026-09-25T18:40:03.1182+00:00",
+            "concluida_em": null
+          }
+        ]
+      },
+      "TarefaNova": {
+        "type": "object",
+        "required": ["titulo"],
+        "additionalProperties": false,
+        "description": "Campo fora desta lista: 400. A conta é a do token; nada no corpo muda a conta.",
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "descricao": {
+            "type": ["string", "null"],
+            "maxLength": 10000
+          },
+          "prioridade": {
+            "type": "string",
+            "enum": ["baixa", "media", "alta"],
+            "default": "media"
+          },
+          "prazo": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 com fuso (Z ou -03:00). Sem fuso: 400."
+          },
+          "lead_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "Lead da conta. De outra conta, de teste ou inexistente: 400."
+          },
+          "projeto_ref": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "responsavel": {
+            "$ref": "#/components/schemas/Responsavel",
+            "description": "Padrão: dono."
+          },
+          "criador_ref": {
+            "type": ["string", "null"],
+            "maxLength": 200,
+            "description": "Agente do Office que criou."
+          },
+          "ordem_externa_id": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          }
+        },
+        "examples": [
+          {
+            "titulo": "Ligar para a Barbearia Exemplo",
+            "prioridade": "alta",
+            "prazo": "2026-09-26T10:00:00-03:00",
+            "lead_id": "0b7c9a6e-1f2d-4c3b-8a9e-5d4c3b2a1f0e",
+            "responsavel": {
+              "tipo": "agente",
+              "ref": "sdr-1"
+            },
+            "criador_ref": "nexo",
+            "ordem_externa_id": "ordem-123"
+          }
+        ]
+      },
+      "TarefaAlteracao": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "description": "Só os campos enviados mudam; null limpa o campo opcional. Campo fora desta lista: 400.",
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "descricao": {
+            "type": ["string", "null"],
+            "maxLength": 10000
+          },
+          "prioridade": {
+            "type": "string",
+            "enum": ["baixa", "media", "alta"]
+          },
+          "prazo": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 com fuso (Z ou -03:00). Sem fuso: 400."
+          },
+          "lead_id": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "Lead da conta. De outra conta, de teste ou inexistente: 400."
+          },
+          "projeto_ref": {
+            "type": ["string", "null"],
+            "maxLength": 200
+          },
+          "responsavel": {
+            "$ref": "#/components/schemas/Responsavel"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pendente", "em_andamento", "aguardando_revisao", "concluida"],
+            "description": "Só vai e volta entre pendente e em_andamento, e só a partir desses dois. Outro valor, ou tarefa em aguardando_revisao ou concluida: 409 transicao_invalida."
+          }
+        }
+      },
+      "Entrega": {
+        "type": "object",
+        "required": ["resultado"],
+        "additionalProperties": false,
+        "properties": {
+          "resultado": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "O que foi feito."
+          },
+          "resultado_ref": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "maxLength": 2000,
+            "description": "Link http ou https para o resultado."
+          }
+        },
+        "examples": [
+          {
+            "resultado": "Liguei; a demonstração ficou para quinta, 10h.",
+            "resultado_ref": "https://office.exemplo.com/ordens/123"
+          }
+        ]
+      },
+      "PaginaTarefas": {
+        "type": "object",
+        "properties": {
+          "dados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tarefa"
+            }
+          },
+          "proximo_cursor": {
+            "type": ["string", "null"]
+          },
+          "tem_mais": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ErroComTarefa": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Erro"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tarefa": {
+                "$ref": "#/components/schemas/Tarefa"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "responses": {
+      "ParametroInvalido": {
+        "description": "Parâmetro fora do formato ou do limite, ou cursor inválido. Não repetir.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "NaoAutorizado": {
+        "description": "Token ausente, errado ou revogado. Não repetir; avisar o dono.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "EscopoInsuficiente": {
+        "description": "O token não tem o escopo da rota. Não repetir.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "NaoEncontrado": {
+        "description": "Lead ou tarefa inexistente, de teste ou de outra conta. Não repetir.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "LimiteExcedido": {
+        "description": "Mais chamadas que o limite do token em 60 s (padrão 120). Repetir depois do Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "description": "Segundos até a janela liberar.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "ErroInterno": {
+        "description": "Falha do EleveFlow. Repetir com espera de 1, 2, 4, 8 e 16 s.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      },
+      "TransicaoInvalida": {
+        "description": "Mudança de status fora da regra, ou entrega de tarefa concluída. Não repetir: a tarefa atual vem em tarefa; decida a partir dela.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErroComTarefa"
+            }
+          }
+        }
+      },
+      "VersaoDesatualizada": {
+        "description": "If-Match diferente da versão atual: alguém alterou a tarefa. Não repetir às cegas: refaça a alteração sobre a tarefa atual, que vem em tarefa.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErroComTarefa"
+            }
+          }
+        }
+      },
+      "VersaoObrigatoria": {
+        "description": "Falta If-Match. Leia a tarefa e mande a versao dela.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Erro"
+            }
+          }
+        }
+      }
+    }
+  }
+}

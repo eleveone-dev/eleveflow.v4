@@ -1,0 +1,15 @@
+# EleveFlow CRM
+
+> CRM automático multi-contas com automação de WhatsApp, pipeline visual de vendas e motor de fluxos personalizável.
+
+EleveFlow CRM ajuda equipes a captar, qualificar e converter leads via WhatsApp com fluxos automatizados, pipeline kanban e extração de contatos.
+
+## Pages
+
+- [Início](/): Visão geral do EleveFlow CRM e acesso à plataforma.
+- [Criar Conta](/register): Cadastro gratuito de novos usuários.
+- [Entrar](/login): Login para usuários existentes.
+
+## Optional
+
+- [Recuperar Senha](/forgot-password): Fluxo de recuperação de acesso por e-mail.

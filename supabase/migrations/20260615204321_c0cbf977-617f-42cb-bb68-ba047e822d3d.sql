@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Deny all client access to global_settings" ON public.global_settings;
+CREATE POLICY "Deny all client access to global_settings" ON public.global_settings AS RESTRICTIVE FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);

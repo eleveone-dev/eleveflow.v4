@@ -1,0 +1,61 @@
+name: Staging E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RUN_STAGING_E2E to run tests that mutate isolated staging data.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    if: inputs.confirm == 'RUN_STAGING_E2E'
+    name: Staging end-to-end tests
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.STAGING_SUPABASE_PUBLISHABLE_KEY || secrets.STAGING_SUPABASE_ANON_KEY }}
+      STAGING_SUPABASE_SECRET_KEY: ${{ secrets.STAGING_SUPABASE_SECRET_KEY || secrets.STAGING_SERVICE_ROLE_KEY }}
+      STAGING_EVOLUTION_WEBHOOK_SECRET: ${{ secrets.STAGING_EVOLUTION_WEBHOOK_SECRET }}
+      STAGING_INTERNAL_FUNCTION_SECRET: ${{ secrets.STAGING_INTERNAL_FUNCTION_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check staging secrets are configured
+        run: |
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY STAGING_SUPABASE_SECRET_KEY STAGING_EVOLUTION_WEBHOOK_SECRET STAGING_INTERNAL_FUNCTION_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::error title=Missing staging secret::$name must be configured in the staging GitHub environment."
+              exit 1
+            fi
+          done
+
+      - name: Seed isolated staging data
+        run: node scripts/seed-staging.mjs
+        env:
+          SUPABASE_URL: ${{ env.VITE_SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ env.STAGING_SUPABASE_SECRET_KEY }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E suite against staging
+        run: npm run test:e2e

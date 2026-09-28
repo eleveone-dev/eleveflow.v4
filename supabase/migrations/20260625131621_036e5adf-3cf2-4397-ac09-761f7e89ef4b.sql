@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.prevent_duplicate_send_queue() FROM PUBLIC, anon, authenticated;
